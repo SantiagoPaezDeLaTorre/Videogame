@@ -13,7 +13,7 @@ public class PauseManager : MonoBehaviour {
     private void Awake() {
         //action = new PauseAction();
     }
-    private void Start() {
+    private void Update() {
         if (Input.GetKeyDown(pauseKey)) {
             DeterminePause();
         }
