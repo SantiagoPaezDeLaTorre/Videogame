@@ -19,7 +19,7 @@ public class DetectionCore : MonoBehaviour
     public void CheckToPlayerDistance(Transform player){
         distance = Vector3.Distance(transform.position, player.position);
     }
-    public void LookAtPlayer(Transform player) {
+    public virtual void LookAtPlayer(Transform player) {
         if (distance <= detectionDistance) {
             transform.LookAt(player);
         }

@@ -80,6 +80,7 @@ namespace MyGame {
         private float _speed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
+        private float targetAngle = 0.0f;
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _velocityLimit = 53.0f;
@@ -201,19 +202,21 @@ namespace MyGame {
             } else {
                   _speed = targetSpeed;
             }
-             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
+            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
              if (_animationBlend < 0.01f) {
                 _animationBlend = 0f;
              }
              if (inputDirection != Vector2.zero) {
-                float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
+                targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
-                Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                Vector3 motion = moveDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
-                _controller.Move(motion);
+               
                 
              }
+            Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            Vector3 motion = moveDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
+            _controller.Move(motion);
+
             if (_hasAnimator) {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
@@ -236,7 +239,7 @@ namespace MyGame {
                 }
 
                 // Jump
-                if (isJumping & isReadyToJump) {
+                if (isJumping && isReadyToJump) {
                     isJumping = false;
                     isReadyToJump = false;
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
