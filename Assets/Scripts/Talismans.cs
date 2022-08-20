@@ -1,11 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-//using UnityEngine.InputSystem;
 
 namespace MyGame {
     public class Talismans : MonoBehaviour {
-        //private ThirdPersonActionAsset playerActionAsset;
         public TaliObjects taliObjects;
         public HealthManager healthManager;
         public PlayerMovement player;
@@ -20,53 +18,42 @@ namespace MyGame {
         private bool isFireReady = true;
         private bool waterTali;
         private bool isWaterReady = true;
+        private int taliUsed = 0;
 
-        private void Awake() {
-            //playerActionAsset = GetComponent<ThirdPersonActionAsset>();
-        }
-        // private void OnEnable() {
-        //     playerActionAsset.Player.EarthTali.started += UseEarth;
-        //     playerActionAsset.Player.WindTali.started += UseWind;
-        //     playerActionAsset.Player.FireTali.started += UseFire;
-        //     playerActionAsset.Player.WaterTali.started += UseWater;
-        //     playerActionAsset.Player.Enable();
-        // }
-        // private void OnDisable() {
-        //     playerActionAsset.Player.EarthTali.started -= UseEarth;
-        //     playerActionAsset.Player.WindTali.started -= UseWind;
-        //     playerActionAsset.Player.FireTali.started -= UseFire;
-        //     playerActionAsset.Player.WaterTali.started -= UseWater;
-        //     if (playerActionAsset != null) {
-        //         playerActionAsset.Player.Disable();
-        //     }
-        // }
+        [Header("Keybinds")]
+        public KeyCode earthKey = KeyCode.Alpha1;
+        public KeyCode windKey = KeyCode.Alpha2;
+        public KeyCode fireKey = KeyCode.Alpha3;
+        public KeyCode waterKey = KeyCode.Alpha4;
 
         void Update() {
-            pickTali();
+            MyInput();
         }
 
-        // prepare scenario for switch
-        public int getTaliPicked() {
-            int response = 0;
-            // creo que los & ready estan de mas 
-            if (earthTali & isEarthReady) {
-                earthTali = false;
-                response = 1;
-            } else if (windTali & isWindReady) {
-                windTali = false;
-                response = 2;
-            } else if (fireTali & isFireReady) {
-                fireTali = false;
-                response = 3;
-            } else if (waterTali & isWaterReady) {
-                waterTali = false;
-                response = 4;
+        private void MyInput() {
+            taliUsed = 0;
+            if (Input.GetKey(earthKey) && isEarthReady) {
+               //earthTali = true;
+                taliUsed = 1;
+            } else if (Input.GetKey(windKey) && isWindReady) {
+                //windTali = true;
+                taliUsed = 2;
+            } else if (Input.GetKey(fireKey) && isFireReady) {
+                //fireTali = true;
+                taliUsed = 3;
+            } else if (Input.GetKey(waterKey) && isWaterReady) {
+                //waterTali = true;
+                taliUsed = 4;
             }
-            return response;
+
+            if (taliUsed != 0) {
+                SummonTalis(taliUsed);
+            }
+
         }
-        // SWITCH
-        public void pickTali() {
-            switch (getTaliPicked()) {
+
+        private void SummonTalis(int tali) {
+            switch (tali) {
                 case 1:
                     SummonEarth();
                     break;
@@ -81,7 +68,6 @@ namespace MyGame {
                     break;
             }
         }
-        
         
 // ---------- USE TALIS ----------
         public void SummonEarth() {
@@ -114,54 +100,22 @@ namespace MyGame {
         private void ResetEarthTali() {
             isEarthReady = true;
             taliObjects.earthCount += 1;
-            int value = 1;
-            taliObjects.addUse(value);
         }
         private void ResetWindTali() {
             isWindReady = true;
             player.sprintSpeed = player.sprintSpeed - 4.2f;
             player.moveSpeed = player.moveSpeed - 1.5f;
             player.jumpHeight = player.jumpHeight - 2.5f;
-            
-            // int value = 2;
-            // taliObjects.addUse(value);
+            taliObjects.windCount += 1;
         }
         private void ResetFireTali() {
             isFireReady = true;
-            
-            int value = 3;
-            taliObjects.addUse(value);
+            taliObjects.fireCount += 1;
         }
         private void ResetWaterTali() {
             isWaterReady = true;
-            
-            int value = 4;
-            taliObjects.addUse(value);
+            taliObjects.waterCount += 1;
         }
-
-// --------- INPUT --------
-    //     private void UseEarth(InputAction.CallbackContext value) {
-    //         if (isEarthReady) {
-    //             earthTali = true;
-    //         }
-    //     }
-    //     private void UseWind(InputAction.CallbackContext value) {
-    //         if (isWindReady) {
-    //             windTali = true;
-    //         }
-    //         if (value.performed) {
-    //             int num = 2;
-    //             taliObjects.addUse(num);
-    //         }
-    //     }
-    //     private void UseFire(InputAction.CallbackContext value) {
-    //         if (isFireReady) {
-    //             fireTali = true;
-    //         }
-    //     }
-    //     private void UseWater(InputAction.CallbackContext value) {
-    //         waterTali = true;
-    //     }
     }
 }
 
