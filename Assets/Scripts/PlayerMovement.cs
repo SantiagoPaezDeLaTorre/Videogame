@@ -42,7 +42,7 @@ namespace MyGame {
 
         [Header("Player Grounded")]
         [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
-        public bool grounded = true;
+        public bool isGrounded = true;
 
         [Tooltip("Useful for rough ground")]
         public float groundedOffset = -0.14f;
@@ -68,6 +68,9 @@ namespace MyGame {
 
         [Tooltip("For locking the camera position on all axis")]
         public bool lockCameraPosition = false;
+        public Vector2 inputDirection = new Vector2();
+        //[HideInInspector] public float horizontalInput;
+        //[HideInInspector] public float verticalInput;
 
         // cinemachine
         private float _cinemachineTargetHorizontal;
@@ -161,132 +164,65 @@ namespace MyGame {
         private void Update() {
             //if (PauseManager.isPaused) return;
             GroundedCheck();
+            MyInput();
+            //Move();
             Move();
-            //Jump();
+            Jump();
         }
-        private void LateUpdate()
-        {
-            //CameraRotation();
+        private void FixedUpdate() {
+            //Move();
+            //aca me quiero encargar de setear los estados segun los valores de las variables y mis booleanos
         }
-        private void Move()
-        {
-            float horizontalInput = Input.GetAxisRaw("Horizontal");
-            float verticalInput = Input.GetAxisRaw("Vertical");
+
+        private void MyInput() {
+            if (Input.GetKey(jumpKey) && isGrounded) {
+                isJumping = true;
+            }
+            isSprinting = Input.GetKey(sprintKey);
+        }
+
+        private void Move() {
+            //float horizontalInput = Input.GetAxisRaw("Horizontal");
+            //float verticalInput = Input.GetAxisRaw("Vertical");
             // set target speed based on move and sprint speed
             float targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
-            Vector3 direction = new Vector3(horizontalInput, 0f, verticalInput).normalized;
-            if (direction == Vector3.zero) targetSpeed = 0.0f;
+            //Vector3 inputDirection = new Vector3(horizontalInput, 0f, verticalInput).normalized;
+            Vector2 inputDirection = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            if (inputDirection == Vector2.zero) targetSpeed = 0.0f;
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-            float inputMagnitude = direction.magnitude;
-            if (direction.magnitude >= 0.1f)
-            {
-                float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + camera.eulerAngles.y;
+            float inputMagnitude = inputDirection.magnitude;
+            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+                currentHorizontalSpeed > targetSpeed + speedOffset) {
+                //creates curved result rather than a linear one giving a more organic speed change
+                //note T in Lerp is clamped, so we don't need to clamp our speed
+                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * speedChangeRate);
+                //round speed to 3 decimal places
+                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+            } else {
+                  _speed = targetSpeed;
+            }
+             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
+             if (_animationBlend < 0.01f) {
+                _animationBlend = 0f;
+             }
+             if (inputDirection != Vector2.zero) {
+                float targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
                 float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
                 transform.rotation = Quaternion.Euler(0f, angle, 0f);
                 Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-                _controller.Move(moveDirection.normalized * targetSpeed * Time.deltaTime);
+                Vector3 motion = moveDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
+                _controller.Move(motion);
+                
+             }
+            if (_hasAnimator) {
+                _animator.SetFloat(_animIDSpeed, _animationBlend);
+                _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
         }
 
-        //private void Move() {
-        //    // set target speed based on move and sprint speed
-        //    float targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
-        //    Vector2 movement = move.ReadValue<Vector2>();
-        //    // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
-        //    // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //    // if there is no input, set the target speed to 0
-        //    if (movement == Vector2.zero) targetSpeed = 0.0f;
-
-        //    // a reference to the players current horizontal velocity
-        //    float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
-        //    float inputMagnitude = movement.magnitude;
-
-        //    // accelerate or decelerate to target speed
-        //    if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-        //        currentHorizontalSpeed > targetSpeed + speedOffset) {
-        //        // creates curved result rather than a linear one giving a more organic speed change
-        //        // note T in Lerp is clamped, so we don't need to clamp our speed
-        //        _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-        //            Time.deltaTime * speedChangeRate);
-
-        //        // round speed to 3 decimal places
-        //        _speed = Mathf.Round(_speed * 1000f) / 1000f;
-        //    } else {
-        //        _speed = targetSpeed;
-        //    }
-
-        //    _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
-
-        //    if (_animationBlend < 0.01f) {
-        //        _animationBlend = 0f;
-        //    }
-        //    // normalise input direction
-        //    Vector3 inputDirection = new Vector3(movement.x, 0.0f, movement.y).normalized;
-        //    // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-        //    // if there is a move input rotate player when the player is moving
-        //    if (movement != Vector2.zero) {
-        //        _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-        //        _mainCamera.eulerAngles.y;
-        //        float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-        //            rotationSmoothTime);
-
-        //        // rotate to face input direction relative to camera position
-        //        transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-        //    }
-
-        //    Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
-        //    Vector3 motion = targetDirection.normalized * (_speed * Time.deltaTime) +
-        //                     new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
-        //    // move the player
-        //    //motion = AdjustVelocityToSlope(motion);
-        //    _controller.Move(motion);
-        //    // update animator if using character
-        //    if (_hasAnimator) {
-        //        _animator.SetFloat(_animIDSpeed, _animationBlend);
-        //        _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
-        //    }
-        //}
-
-        //private Vector3 AdjustVelocityToSlope(Vector3 motion) {
-        //    var ray = new Ray(transform.position, Vector3.down);
-        //    Vector3 response;
-        //    if (Physics.Raycast(ray, out RaycastHit hitInfo, 0.25f)) {
-        //        var slopeRotation = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
-        //        var adjustedVelocity = slopeRotation * motion;
-        //        if (adjustedVelocity.y < 0) {
-        //            return adjustedVelocity;
-        //        } 
-        //    }
-        //    return motion;
-        //}
-
-
-
-        //private void CameraRotation() {
-        //    //float horizontalInput = Input.GetAxisRaw("Horizontal");
-        //    //float verticalInput = Input.GetAxisRaw("Vertical");
-        //    //Vector2 lookAt = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
-        //    //Vector2 lookAt = look.ReadValue<Vector2>();
-        //    // if there is an input and camera position is not fixed
-        //    if (mouseDelta.sqrMagnitude >= _threshold && !lockCameraPosition) {
-        //        // REMINDER: Don't multiply mouse input by Time.deltaTime. Units stuff;
-        //        Debug.Log("ESTA LLEGANDO ALGO");
-        //        float deltaTimeMultiplier = 1.0f;
-
-        //        _cinemachineTargetHorizontal += mouseDelta.x * deltaTimeMultiplier;
-        //        _cinemachineTargetVertical += mouseDelta.z * deltaTimeMultiplier;
-        //    }
-        //    // clamp  rotation so values are limited 360 degrees
-        //    _cinemachineTargetHorizontal = ClampAngle(_cinemachineTargetHorizontal, float.MinValue, float.MaxValue);
-        //    _cinemachineTargetVertical = ClampAngle(_cinemachineTargetVertical, bottomClamp, topClamp);
-        //    // Cinemachine will follow this target
-        //    CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetVertical + cameraAngleOverride,
-        //        _cinemachineTargetHorizontal, 0.0f);
-        //}
-
-        private void Jump() {
-            if (grounded) {
+        public void Jump() {
+            if (isGrounded) {
+                //isJumping = true;
                 // reset the fall timeout timer
                 _fallTimeoutDelta = fallTimeout;
                 // update animator to base state
@@ -298,6 +234,7 @@ namespace MyGame {
                 if (_verticalVelocity < 0.0f) {
                     _verticalVelocity = -2f;
                 }
+
                 // Jump
                 if (isJumping & isReadyToJump) {
                     isJumping = false;
@@ -317,7 +254,7 @@ namespace MyGame {
                     _animator.SetBool(_animIDFreeFall, true);
                 }
             }
-            // apply gravity over time if under limit 
+            // apply gravity over time
             //(multiply by delta time twice to linearly speed up over time, but...
             //... would have to set certain limit so it doesnt fly away uncontrolled)
             if (_verticalVelocity < _velocityLimit) {
@@ -331,6 +268,7 @@ namespace MyGame {
         //    }
         //}
         private void ResetJump() {
+            isJumping = false;
             isReadyToJump = true;
         }
         private void AssignAnimationIDs()
@@ -347,13 +285,13 @@ namespace MyGame {
             // set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
                 transform.position.z);
-            grounded = Physics.CheckSphere(spherePosition, groundedRadius, ground,
+            isGrounded = Physics.CheckSphere(spherePosition, groundedRadius, ground,
                 QueryTriggerInteraction.Ignore);
 
             // update animator if using character
             if (_hasAnimator)
             {
-                _animator.SetBool(_animIDGrounded, grounded);
+                _animator.SetBool(_animIDGrounded, isGrounded);
             }
         }
         //private void DoSprint(InputAction.CallbackContext value) {
@@ -365,7 +303,7 @@ namespace MyGame {
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
         }
         private void OnDrawGizmosSelected() {
-            if (grounded) Gizmos.color = transparentGreen;
+            if (isGrounded) Gizmos.color = transparentGreen;
             else Gizmos.color = transparentRed;
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(
@@ -387,3 +325,104 @@ namespace MyGame {
         }
     }
 }
+
+
+
+
+
+//private void Move() {
+//    // set target speed based on move and sprint speed
+//    float targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
+//    Vector2 movement = move.ReadValue<Vector2>();
+//    // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
+
+//    // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+//    // if there is no input, set the target speed to 0
+//    if (movement == Vector2.zero) targetSpeed = 0.0f;
+
+//    // a reference to the players current horizontal velocity
+//    float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+//    float inputMagnitude = movement.magnitude;
+
+//    // accelerate or decelerate to target speed
+//    if (currentHorizontalSpeed < targetSpeed - speedOffset ||
+//        currentHorizontalSpeed > targetSpeed + speedOffset) {
+//        // creates curved result rather than a linear one giving a more organic speed change
+//        // note T in Lerp is clamped, so we don't need to clamp our speed
+//        _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
+//            Time.deltaTime * speedChangeRate);
+
+//        // round speed to 3 decimal places
+//        _speed = Mathf.Round(_speed * 1000f) / 1000f;
+//    } else {
+//        _speed = targetSpeed;
+//    }
+
+//    _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
+
+//    if (_animationBlend < 0.01f) {
+//        _animationBlend = 0f;
+//    }
+//    // normalise input direction
+//    Vector3 inputDirection = new Vector3(movement.x, 0.0f, movement.y).normalized;
+//    // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
+//    // if there is a move input rotate player when the player is moving
+//    if (movement != Vector2.zero) {
+//        _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
+//        _mainCamera.eulerAngles.y;
+//        float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
+//            rotationSmoothTime);
+
+//        // rotate to face input direction relative to camera position
+//        transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+//    }
+
+//    Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+//    Vector3 motion = targetDirection.normalized * (_speed * Time.deltaTime) +
+//                     new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
+//    // move the player
+//    //motion = AdjustVelocityToSlope(motion);
+//    _controller.Move(motion);
+//    // update animator if using character
+//    if (_hasAnimator) {
+//        _animator.SetFloat(_animIDSpeed, _animationBlend);
+//        _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+//    }
+//}
+
+//private Vector3 AdjustVelocityToSlope(Vector3 motion) {
+//    var ray = new Ray(transform.position, Vector3.down);
+//    Vector3 response;
+//    if (Physics.Raycast(ray, out RaycastHit hitInfo, 0.25f)) {
+//        var slopeRotation = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
+//        var adjustedVelocity = slopeRotation * motion;
+//        if (adjustedVelocity.y < 0) {
+//            return adjustedVelocity;
+//        } 
+//    }
+//    return motion;
+//}
+
+
+
+//private void CameraRotation() {
+//    //float horizontalInput = Input.GetAxisRaw("Horizontal");
+//    //float verticalInput = Input.GetAxisRaw("Vertical");
+//    //Vector2 lookAt = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+//    //Vector2 lookAt = look.ReadValue<Vector2>();
+//    // if there is an input and camera position is not fixed
+//    if (mouseDelta.sqrMagnitude >= _threshold && !lockCameraPosition) {
+//        // REMINDER: Don't multiply mouse input by Time.deltaTime. Units stuff;
+//        Debug.Log("ESTA LLEGANDO ALGO");
+//        float deltaTimeMultiplier = 1.0f;
+
+//        _cinemachineTargetHorizontal += mouseDelta.x * deltaTimeMultiplier;
+//        _cinemachineTargetVertical += mouseDelta.z * deltaTimeMultiplier;
+//    }
+//    // clamp  rotation so values are limited 360 degrees
+//    _cinemachineTargetHorizontal = ClampAngle(_cinemachineTargetHorizontal, float.MinValue, float.MaxValue);
+//    _cinemachineTargetVertical = ClampAngle(_cinemachineTargetVertical, bottomClamp, topClamp);
+//    // Cinemachine will follow this target
+//    CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetVertical + cameraAngleOverride,
+//        _cinemachineTargetHorizontal, 0.0f);
+//}
