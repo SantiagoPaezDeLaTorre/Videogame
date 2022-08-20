@@ -22,15 +22,6 @@ public class UIManager : MonoBehaviour {
         healthManager.healthChangeEvent.RemoveListener(ChangeSliderValue);
     }
     public void ChangeSliderValue(int healthAmount) {
-        Debug.Log("UIMANAGER");
         slider.value = healthAmount;
     } 
-    // public void SetMaxHealth(int health) {
-    //     slider.maxValue = health;
-    //     slider.value = health;
-    // } 
-
-    // public void SetHealth(int health) {
-    //     slider.value = health;
-    // }
 }
