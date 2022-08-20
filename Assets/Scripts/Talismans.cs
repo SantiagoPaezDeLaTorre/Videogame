@@ -78,8 +78,8 @@ namespace MyGame {
         public void SummonWind() {
             Debug.Log("active wind");
             isWindReady = false;
-            player.sprintSpeed = player.sprintSpeed + 4.2f;
-            player.moveSpeed = player.moveSpeed + 1.5f;
+            player.sprintSpeed = player.sprintSpeed + 6f;
+            player.moveSpeed = player.moveSpeed + 2f;
             player.jumpHeight = player.jumpHeight + 2.5f;
             Invoke(nameof(ResetWindTali), taliTimeEffect);
         }
@@ -103,8 +103,8 @@ namespace MyGame {
         }
         private void ResetWindTali() {
             isWindReady = true;
-            player.sprintSpeed = player.sprintSpeed - 4.2f;
-            player.moveSpeed = player.moveSpeed - 1.5f;
+            player.sprintSpeed = player.sprintSpeed - 6f;
+            player.moveSpeed = player.moveSpeed - 2f;
             player.jumpHeight = player.jumpHeight - 2.5f;
             taliObjects.windCount += 1;
         }
