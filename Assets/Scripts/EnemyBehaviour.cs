@@ -2,58 +2,70 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyBehaviour : DetectionCore {
-    
-    public float speed = 1f;
-    public float zombieSlower = 0.1f;
+public class EnemyBehaviour : MonoBehaviour {
+    public Animator animator;
+    public Rigidbody body; 
+
+    public Transform player;
+
+    public float speed = 100f;
+    private Vector3 moveDirection;
     public float shootDistance = 25f;
     public float meleeDistance = 12f;
-    public float reactionTime = 1.5f;
     float enemyHeight;
-    public Transform zombieHead;
+
+    [HideInInspector] 
+    public float distance;
+    public float detectionDistance = 50f;
 
     void Start() {
+        animator = GetComponent<Animator>();
+        body = GetComponent<Rigidbody>();
         enemyHeight = transform.position.y;
     }
 
+    // Update is called once per frame
     void Update() {
-        CheckToPlayerDistance(Player);
-        if (distance <= detectionDistance) {
-            GetToPlayerRotation(Player);
-            LookAtPlayer(Player);
-            Invoke(nameof(FollowPlayer), reactionTime);
+
+        CheckPlayerDistance(player);
+        moveDirection = Vector3.zero;
+        LookAtPlayer(player);
+    }
+    void FixedUpdate() {
+        body.AddForce(moveDirection * speed);
+    }
+
+    public void CheckPlayerDistance(Transform player) {
+        distance = Vector3.Distance(transform.position, player.position);
+    }
+
+    public virtual void LookAtPlayer(Transform player)  {
+        if ((distance <= detectionDistance)) {
+            //transform.LookAt(player);
+            Vector3 direction = player.position - this.transform.position;
+            direction.y = 0;
+            this.transform.rotation = Quaternion.Slerp(this.transform.rotation,
+                                          Quaternion.LookRotation(direction), 0.1f);
+            animator.SetBool("isIdle", false);
+            //FollowPlayer();
+            //AttackBehaviour();
+            if (direction.magnitude > .8) {
+                moveDirection = direction.normalized;
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isStriking", false);
+            } else {
+                animator.SetBool("isStriking", true);
+                animator.SetBool("isWalking", false);
+            }
+        } else {
+            animator.SetBool("isIdle", true);
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isStriking", false);
         }
-        AttackBehaviour();
+        //else {
+        //    transform.rotation = Quaternion.EulerAngles(player.position - transform.position);
+        //}
     }
-
-    public void GetToPlayerRotation(Transform player) {
-        zombieHead.LookAt(player);
-    }
-
-    public override void LookAtPlayer(Transform player) {
-        if (distance <= detectionDistance) {
-            //StartCoroutine(RotateOverTime(transform.rotation, zombieHead.rotation, zombieSlower));
-            transform.LookAt(player);
-            Debug.Log("enemiyyyy");
-            //transform.rotation = Quaternion.Slerp(transform.rotation, player.position, zombieSlower*Time.deltaTime);
-        }
-    }
-
-    //IEnumerator RotateOverTime(Quaternion originalRotation, Quaternion finalRotation, float duration) {
-    //    if (duration > 0f) {
-    //        float startTime = Time.time;
-    //        float endTime = startTime + duration;
-    //        transform.rotation = originalRotation;
-    //        yield return null;
-    //        while (Time.time < endTime) {
-    //            float progress = (Time.time - startTime) / duration;
-    //            // progress will equal 0 at startTime, 1 at endTime.
-    //            transform.rotation = Quaternion.Slerp(originalRotation, finalRotation, progress);
-    //            yield return null;
-    //        }
-    //    }
-    //    transform.rotation = finalRotation;
-    //}
 
 
     void AttackBehaviour() {
@@ -66,9 +78,10 @@ public class EnemyBehaviour : DetectionCore {
     void FollowPlayer() {
         if (distance <= detectionDistance 
         && distance > meleeDistance) {
-            
-            transform.position = Vector3
-            .Lerp(transform.position, Player.position, speed*Time.deltaTime);
+            body.AddForce(Vector3.forward * speed, ForceMode.Force);
+            Debug.Log("adding force");
+            //transform.position = Vector3
+            //.Lerp(transform.position, Player.position, speed*Time.deltaTime);
             if (transform.position.y != enemyHeight) {
                 transform.position = new Vector3(transform.position.x, enemyHeight, transform.position.z);
             }   

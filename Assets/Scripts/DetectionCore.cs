@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DetectionCore : MonoBehaviour
-{
-    
+public class DetectionCore : MonoBehaviour {
+
+
     [HideInInspector] public float distance;
     public float detectionDistance = 50f;
     public Transform Player;
@@ -20,8 +20,10 @@ public class DetectionCore : MonoBehaviour
         distance = Vector3.Distance(transform.position, player.position);
     }
     public virtual void LookAtPlayer(Transform player) {
-        if (distance <= detectionDistance) {
+        if ((distance <= detectionDistance)) {
             transform.LookAt(player);
+        } else {
+            transform.rotation = Quaternion.EulerAngles(player.position - transform.position);
         }
     }
 }

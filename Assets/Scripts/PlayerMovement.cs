@@ -183,21 +183,18 @@ namespace MyGame {
         }
 
         private void Move() {
-            //float horizontalInput = Input.GetAxisRaw("Horizontal");
-            //float verticalInput = Input.GetAxisRaw("Vertical");
-            // set target speed based on move and sprint speed
+            float horizontalAxis = Input.GetAxisRaw("Horizontal");
+            float verticalAxis = Input.GetAxisRaw("Vertical");
             float targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
-            //Vector3 inputDirection = new Vector3(horizontalInput, 0f, verticalInput).normalized;
-            Vector2 inputDirection = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            Vector2 inputDirection = new Vector2(horizontalAxis, verticalAxis);
             if (inputDirection == Vector2.zero) targetSpeed = 0.0f;
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
             float inputMagnitude = inputDirection.magnitude;
             if (currentHorizontalSpeed < targetSpeed - speedOffset ||
                 currentHorizontalSpeed > targetSpeed + speedOffset) {
-                //creates curved result rather than a linear one giving a more organic speed change
-                //note T in Lerp is clamped, so we don't need to clamp our speed
+                //creates curved result giving more organic speed change
+                //note T in Lerp is clamped, so we don't need to clamp speed
                 _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * speedChangeRate);
-                //round speed to 3 decimal places
                 _speed = Mathf.Round(_speed * 1000f) / 1000f;
             } else {
                   _speed = targetSpeed;
@@ -206,13 +203,19 @@ namespace MyGame {
              if (_animationBlend < 0.01f) {
                 _animationBlend = 0f;
              }
-             if (inputDirection != Vector2.zero) {
+             if (verticalAxis == 0f) {
+                Debug.Log("vertical cero");
+                targetAngle = Mathf.Atan2(inputDirection.x, 0)*Mathf.Rad2Deg;
+            } else if (inputDirection != Vector2.zero) {
                 targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
-                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-                transform.rotation = Quaternion.Euler(0f, angle, 0f);
-               
-                
-             }
+            }
+            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            //if (inputDirection != Vector2.zero) {
+            //    targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
+            //    float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            //    transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            // }
             Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             Vector3 motion = moveDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
             _controller.Move(motion);
@@ -225,7 +228,6 @@ namespace MyGame {
 
         public void Jump() {
             if (isGrounded) {
-                //isJumping = true;
                 // reset the fall timeout timer
                 _fallTimeoutDelta = fallTimeout;
                 // update animator to base state
@@ -265,17 +267,11 @@ namespace MyGame {
             }
         }
 
-        //private void DoJump(InputAction.CallbackContext value) {
-        //    if (grounded) {
-        //        isJumping = true;
-        //    }
-        //}
         private void ResetJump() {
             isJumping = false;
             isReadyToJump = true;
         }
-        private void AssignAnimationIDs()
-        {
+        private void AssignAnimationIDs() {
             _animIDSpeed = Animator.StringToHash("Speed");
             _animIDGrounded = Animator.StringToHash("Grounded");
             _animIDJump = Animator.StringToHash("Jump");
@@ -283,8 +279,7 @@ namespace MyGame {
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         }
 
-        private void GroundedCheck()
-        {
+        private void GroundedCheck() {
             // set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
                 transform.position.z);
