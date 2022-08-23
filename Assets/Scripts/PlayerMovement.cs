@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
 //using UnityEngine.InputSystem;
 
-namespace MyGame {
+namespace MyGame
+{
 
-//[RequireComponent(typeof(CharacterController))]
+    //[RequireComponent(typeof(CharacterController))]
     //[RequireComponent(typeof(PlayerInput))]
 
-    public class PlayerMovement : MonoBehaviour {
+    public class PlayerMovement : MonoBehaviour
+    {
 
         [Header("Player")]
         [Tooltip("Walking speed")]
@@ -130,7 +132,8 @@ namespace MyGame {
         public KeyCode jumpKey = KeyCode.Space;
         public KeyCode sprintKey = KeyCode.LeftShift;
 
-        private void Awake() {
+        private void Awake()
+        {
             _mainCamera = Camera.main.transform;
             //playerActionAsset = new ThirdPersonActionAsset();
         }
@@ -149,7 +152,8 @@ namespace MyGame {
         //    playerActionAsset.Player.Disable();
         //}
 
-        private void Start() {
+        private void Start()
+        {
             //mousePosition = Input.mousePosition;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -163,31 +167,37 @@ namespace MyGame {
             _fallTimeoutDelta = fallTimeout;
         }
 
-        private void Update() {
+        private void Update()
+        {
             //if (PauseManager.isPaused) return;
             GroundedCheck();
             MyInput();
             //Move();
             Move();
             Jump();
-        } 
-        private void FixedUpdate() {
+        }
+        private void FixedUpdate()
+        {
             //Move();
             //aca me quiero encargar de setear los estados segun los valores de las variables y mis booleanos
         }
 
-        private void MyInput() {
-            if (Input.GetKey(jumpKey) && isGrounded) {
+        private void MyInput()
+        {
+            if (Input.GetKey(jumpKey) && isGrounded)
+            {
                 isJumping = true;
             }
             isSprinting = Input.GetKey(sprintKey);
         }
 
-        private void Move() {
+        private void Move()
+        {
             float horizontalAxis = Input.GetAxisRaw("Horizontal");
             float verticalAxis = Input.GetAxisRaw("Vertical");
             // dont lose speed inair if stop sprint or if wind runs out
-            if (isGrounded) {
+            if (isGrounded)
+            {
                 targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
             }
             Vector2 inputDirection = new Vector2(horizontalAxis, verticalAxis);
@@ -195,22 +205,29 @@ namespace MyGame {
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
             float inputMagnitude = inputDirection.magnitude;
             if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset) {
+                currentHorizontalSpeed > targetSpeed + speedOffset)
+            {
                 //creates curved result giving more organic speed change
                 //note T in Lerp is clamped, so we don't need to clamp speed
                 _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude, Time.deltaTime * speedChangeRate);
                 _speed = Mathf.Round(_speed * 1000f) / 1000f;
-            } else {
-                  _speed = targetSpeed;
+            }
+            else
+            {
+                _speed = targetSpeed;
             }
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * speedChangeRate);
-             if (_animationBlend < 0.01f) {
+            if (_animationBlend < 0.01f)
+            {
                 _animationBlend = 0f;
-             }
-             if (verticalAxis == 0f) {
+            }
+            if (verticalAxis == 0f)
+            {
                 Debug.Log("vertical cero");
-                targetAngle = Mathf.Atan2(inputDirection.x, 0)*Mathf.Rad2Deg;
-            } else if (inputDirection != Vector2.zero) {
+                targetAngle = Mathf.Atan2(inputDirection.x, 0) * Mathf.Rad2Deg;
+            }
+            else if (inputDirection != Vector2.zero)
+            {
                 targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
             }
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
@@ -224,58 +241,71 @@ namespace MyGame {
             Vector3 motion = moveDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime;
             _controller.Move(motion);
 
-            if (_hasAnimator) {
+            if (_hasAnimator)
+            {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
         }
 
-        public void Jump() {
-            if (isGrounded) {
+        public void Jump()
+        {
+            if (isGrounded)
+            {
                 // reset the fall timeout timer
                 _fallTimeoutDelta = fallTimeout;
                 // update animator to base state
-                if (_hasAnimator) {
+                if (_hasAnimator)
+                {
                     _animator.SetBool(_animIDJump, false);
                     _animator.SetBool(_animIDFreeFall, false);
                 }
                 // stop velocity dropping infinitely when grounded
-                if (_verticalVelocity < 0.0f) {
+                if (_verticalVelocity < 0.0f)
+                {
                     _verticalVelocity = -2f;
                 }
 
                 // Jump
-                if (isJumping && isReadyToJump) {
+                if (isJumping && isReadyToJump)
+                {
                     isJumping = false;
                     isReadyToJump = false;
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
                     Invoke(nameof(ResetJump), jumpCooldown);
                     // update animator to jump
-                    if (_hasAnimator) {
+                    if (_hasAnimator)
+                    {
                         _animator.SetBool(_animIDJump, true);
                     }
                     healthManager.Health(-15);
                 }
-            } else {
+            }
+            else
+            {
                 // update animator to freefall anim
-                if (_hasAnimator) {
+                if (_hasAnimator)
+                {
                     _animator.SetBool(_animIDFreeFall, true);
                 }
             }
             // apply gravity over time
             //(multiply by delta time twice to linearly speed up over time, but...
             //... would have to set certain limit so it doesnt fly away uncontrolled)
-            if (_verticalVelocity < _velocityLimit) {
+            if (_verticalVelocity < _velocityLimit)
+            {
                 _verticalVelocity += gravity * Time.deltaTime;
             }
         }
 
-        private void ResetJump() {
+        private void ResetJump()
+        {
             isJumping = false;
             isReadyToJump = true;
         }
-        private void AssignAnimationIDs() {
+        private void AssignAnimationIDs()
+        {
             _animIDSpeed = Animator.StringToHash("Speed");
             _animIDGrounded = Animator.StringToHash("Grounded");
             _animIDJump = Animator.StringToHash("Jump");
@@ -283,7 +313,8 @@ namespace MyGame {
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         }
 
-        private void GroundedCheck() {
+        private void GroundedCheck()
+        {
             // set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - groundedOffset,
                 transform.position.z);
@@ -299,12 +330,14 @@ namespace MyGame {
         //private void DoSprint(InputAction.CallbackContext value) {
         //    isSprinting = value.started;
         //}
-        private static float ClampAngle(float lfAngle, float lfMin, float lfMax) {
+        private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
+        {
             if (lfAngle < -360f) lfAngle += 360f;
             if (lfAngle > 360f) lfAngle -= 360f;
             return Mathf.Clamp(lfAngle, lfMin, lfMax);
         }
-        private void OnDrawGizmosSelected() {
+        private void OnDrawGizmosSelected()
+        {
             if (isGrounded) Gizmos.color = transparentGreen;
             else Gizmos.color = transparentRed;
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
@@ -312,16 +345,21 @@ namespace MyGame {
                 new Vector3(transform.position.x, transform.position.y - groundedOffset, transform.position.z),
                 groundedRadius);
         }
-        private void OnFootstep(AnimationEvent animationEvent) {
-            if (animationEvent.animatorClipInfo.weight > 0.5f) {
-                if (FootstepAudioClips.Length > 0) {
+        private void OnFootstep(AnimationEvent animationEvent)
+        {
+            if (animationEvent.animatorClipInfo.weight > 0.5f)
+            {
+                if (FootstepAudioClips.Length > 0)
+                {
                     var index = Random.Range(0, FootstepAudioClips.Length);
                     AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
                 }
             }
         }
-        private void OnLand(AnimationEvent animationEvent) {
-            if (animationEvent.animatorClipInfo.weight > 0.5f) {
+        private void OnLand(AnimationEvent animationEvent)
+        {
+            if (animationEvent.animatorClipInfo.weight > 0.5f)
+            {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
             }
         }
