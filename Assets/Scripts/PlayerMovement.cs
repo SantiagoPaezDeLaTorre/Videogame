@@ -77,7 +77,8 @@ namespace MyGame {
         private float _cinemachineTargetVertical;
 
         // player
-        private float _speed;
+        public float _speed;
+        private float targetSpeed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
         private float targetAngle = 0.0f;
@@ -86,7 +87,7 @@ namespace MyGame {
         private float _velocityLimit = 53.0f;
         private bool isReadyToJump = true;
         private bool isJumping = false;
-        private bool isSprinting = false;
+        public bool isSprinting = false;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
@@ -169,7 +170,7 @@ namespace MyGame {
             //Move();
             Move();
             Jump();
-        }
+        } 
         private void FixedUpdate() {
             //Move();
             //aca me quiero encargar de setear los estados segun los valores de las variables y mis booleanos
@@ -185,7 +186,10 @@ namespace MyGame {
         private void Move() {
             float horizontalAxis = Input.GetAxisRaw("Horizontal");
             float verticalAxis = Input.GetAxisRaw("Vertical");
-            float targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
+            // dont lose speed inair if stop sprint or if wind runs out
+            if (isGrounded) {
+                targetSpeed = isSprinting ? sprintSpeed : moveSpeed;
+            }
             Vector2 inputDirection = new Vector2(horizontalAxis, verticalAxis);
             if (inputDirection == Vector2.zero) targetSpeed = 0.0f;
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;

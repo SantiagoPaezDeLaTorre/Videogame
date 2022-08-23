@@ -1,31 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-1215475363877567242
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6050e2d5de785ce4d931e4dbdbf2d755, type: 3}
-  m_Name: ChromaticAberration
-  m_EditorClassIdentifier: 
-  active: 0
-  enabled:
-    overrideState: 1
-    value: 1
-  spectralLut:
-    overrideState: 1
-    value: {fileID: 0}
-    defaultState: 1
-  intensity:
-    overrideState: 1
-    value: 1
-  fastMode:
-    overrideState: 0
-    value: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e6292b2c06870d4495f009f912b9600, type: 3}
-  m_Name: PostProcessVolume Profile
+  m_Name: PostProcessVolume2 Profile
   m_EditorClassIdentifier: 
   settings:
-  - {fileID: -1215475363877567242}
-  - {fileID: 4433677981590959429}
---- !u!114 &4433677981590959429
+  - {fileID: 3200956678862737436}
+  - {fileID: 1112865849262674697}
+--- !u!114 &1112865849262674697
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -94,19 +68,19 @@ MonoBehaviour:
     value: 1
   temperature:
     overrideState: 1
-    value: -23
+    value: -80
   tint:
     overrideState: 1
-    value: -100
+    value: 43
   colorFilter:
     overrideState: 1
-    value: {r: 0, g: 0.09157748, b: 0.16165416, a: 1}
+    value: {r: 1.2973534, g: 0, b: 0.5766015, a: 1}
   hueShift:
-    overrideState: 1
-    value: 121
+    overrideState: 0
+    value: 0
   saturation:
-    overrideState: 1
-    value: -50
+    overrideState: 0
+    value: 0
   brightness:
     overrideState: 0
     value: 0
@@ -114,11 +88,11 @@ MonoBehaviour:
     overrideState: 0
     value: 0
   contrast:
-    overrideState: 1
-    value: 22
+    overrideState: 0
+    value: 0
   mixerRedOutRedIn:
     overrideState: 0
-    value: 106
+    value: 100
   mixerRedOutGreenIn:
     overrideState: 0
     value: 0
@@ -1352,3 +1326,29 @@ MonoBehaviour:
       - 0.5
       - 0.5
       - 0.5
+--- !u!114 &3200956678862737436
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6050e2d5de785ce4d931e4dbdbf2d755, type: 3}
+  m_Name: ChromaticAberration
+  m_EditorClassIdentifier: 
+  active: 1
+  enabled:
+    overrideState: 1
+    value: 1
+  spectralLut:
+    overrideState: 0
+    value: {fileID: 0}
+    defaultState: 1
+  intensity:
+    overrideState: 1
+    value: 1
+  fastMode:
+    overrideState: 0
+    value: 0

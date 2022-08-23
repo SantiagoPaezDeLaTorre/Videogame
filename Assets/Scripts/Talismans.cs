@@ -8,6 +8,8 @@ namespace MyGame {
         public HealthManager healthManager;
         public PlayerMovement player;
 
+        public GameObject postProcess;
+
         private float taliTimeEffect = 5f;
         private float taliCooldown = 10f;
         private bool earthTali;
@@ -28,6 +30,9 @@ namespace MyGame {
 
         void Update() {
             MyInput();
+            if (windTali && player._speed>10f) { 
+                postProcess.SetActive(true);
+            }
         }
 
         private void MyInput() {
@@ -77,6 +82,7 @@ namespace MyGame {
         }
         public void SummonWind() {
             Debug.Log("active wind");
+            windTali = true;
             isWindReady = false;
             player.sprintSpeed = player.sprintSpeed + 6f;
             player.moveSpeed = player.moveSpeed + 2f;
@@ -103,6 +109,8 @@ namespace MyGame {
         }
         private void ResetWindTali() {
             isWindReady = true;
+            windTali = false;
+            postProcess.SetActive(false);
             player.sprintSpeed = player.sprintSpeed - 6f;
             player.moveSpeed = player.moveSpeed - 2f;
             player.jumpHeight = player.jumpHeight - 2.5f;
