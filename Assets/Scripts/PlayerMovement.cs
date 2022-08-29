@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-//using UnityEngine.InputSystem;
+using UnityEngine.InputSystem;
 
 namespace MyGame
 {
@@ -104,7 +104,9 @@ namespace MyGame
 
         //private ThirdPersonActionAsset playerActionAsset;
         //private InputAction move;
-        //private InputAction look;
+        //private InputActions inputSystem;
+        private InputActions input;
+        private InputAction look;
         private Animator _animator;
         private CharacterController _controller;
         private Transform _mainCamera;
@@ -136,21 +138,22 @@ namespace MyGame
         {
             _mainCamera = Camera.main.transform;
             //playerActionAsset = new ThirdPersonActionAsset();
+            input = new InputActions();
         }
-        //private void OnEnable() {
-        //    playerActionAsset.Player.Jump.started += DoJump;
-        //    playerActionAsset.Player.Sprint.started += DoSprint;
-        //    playerActionAsset.Player.Sprint.canceled += DoSprint;
-        //    move = playerActionAsset.Player.Move;
-        //    look = playerActionAsset.Player.Look;
-        //    playerActionAsset.Player.Enable();
-        //}
-        //private void OnDisable() {
-        //    playerActionAsset.Player.Jump.started -= DoJump;
-        //    playerActionAsset.Player.Sprint.started -= DoSprint;
-        //    playerActionAsset.Player.Sprint.canceled -= DoSprint;
-        //    playerActionAsset.Player.Disable();
-        //}
+        private void OnEnable() {
+            //    playerActionAsset.Player.Jump.started += DoJump;
+            //    playerActionAsset.Player.Sprint.started += DoSprint;
+            //    playerActionAsset.Player.Sprint.canceled += DoSprint;
+            //    move = playerActionAsset.Player.Move;
+            input.Player.Enable();
+            look = input.Player.Look;
+        }
+        private void OnDisable() {
+            //    playerActionAsset.Player.Jump.started -= DoJump;
+            //    playerActionAsset.Player.Sprint.started -= DoSprint;
+            //    playerActionAsset.Player.Sprint.canceled -= DoSprint;
+            input.Player.Disable();
+        }
 
         private void Start()
         {
@@ -160,6 +163,8 @@ namespace MyGame
             _cinemachineTargetHorizontal = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
+            //inputSystem = GetComponent<InputActions>();
+            //input = GetComponent<Input>();
 
             AssignAnimationIDs();
 
@@ -169,12 +174,16 @@ namespace MyGame
 
         private void Update()
         {
-            //if (PauseManager.isPaused) return;
+            Vector2 look = input.Player.Look.ReadValue<Vector2>();
+            if (PauseManager.isPaused) return;
             GroundedCheck();
             MyInput();
-            //Move();
             Move();
             Jump();
+        }
+
+        private void LateUpdate() {
+            CameraRotation();
         }
         private void FixedUpdate()
         {
@@ -221,17 +230,20 @@ namespace MyGame
             {
                 _animationBlend = 0f;
             }
-            if (verticalAxis == 0f)
-            {
-                Debug.Log("vertical cero");
-                targetAngle = Mathf.Atan2(inputDirection.x, 0) * Mathf.Rad2Deg;
-            }
-            else if (inputDirection != Vector2.zero)
-            {
+            //if (verticalAxis == 0f)
+            //{
+            //    Debug.Log("vertical cero");
+            //    targetAngle = Mathf.Atan2(inputDirection.x, 0) * Mathf.Rad2Deg;
+            //}
+            //else 
+            if (inputDirection != Vector2.zero) {
                 targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
+                float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+                transform.rotation = Quaternion.Euler(0f, angle, 0f);
             }
-            float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
-            transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            //float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            //transform.rotation = Quaternion.Euler(0f, angle, 0f);
+            
             //if (inputDirection != Vector2.zero) {
             //    targetAngle = Mathf.Atan2(inputDirection.x, inputDirection.y) * Mathf.Rad2Deg + camera.eulerAngles.y;
             //    float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
@@ -248,7 +260,30 @@ namespace MyGame
             }
         }
 
-        public void Jump()
+        private void CameraRotation() {
+            //    //float horizontalInput = Input.GetAxisRaw("Horizontal");
+            //    //float verticalInput = Input.GetAxisRaw("Vertical");
+            //    //Vector2 lookAt = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+            Vector2 lookAt = look.ReadValue<Vector2>();
+            //    // if there is an input and camera position is not fixed
+            if (lookAt.sqrMagnitude >= _threshold && !lockCameraPosition) {
+            //        // REMINDER: Don't multiply mouse input by Time.deltaTime. Units stuff;
+            //        Debug.Log("ESTA LLEGANDO ALGO");
+                float deltaTimeMultiplier = 1.0f;
+
+                _cinemachineTargetHorizontal += lookAt.x * deltaTimeMultiplier;
+                _cinemachineTargetVertical += lookAt.y * deltaTimeMultiplier;
+            }
+            //    // clamp  rotation so values are limited 360 degrees
+            _cinemachineTargetHorizontal = ClampAngle(_cinemachineTargetHorizontal, float.MinValue, float.MaxValue);
+            _cinemachineTargetVertical = ClampAngle(_cinemachineTargetVertical, bottomClamp, topClamp);
+            //    // Cinemachine will follow this target
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetVertical + cameraAngleOverride,
+            _cinemachineTargetHorizontal, 0.0f);
+        }
+
+
+            public void Jump()
         {
             if (isGrounded)
             {
